@@ -42,6 +42,12 @@
   <label id="riskLabel" for="riskAmount">Risk Amount ($)</label>
   <input type="number" id="riskAmount" placeholder="100">
 
+  <label for="direction">Direction</label>
+  <select id="direction">
+    <option value="long">Long</option>
+    <option value="short">Short</option>
+  </select>
+
   <label for="levelPrice">Level Price</label>
   <input type="number" id="levelPrice" placeholder="10000">
 
@@ -60,7 +66,6 @@
     <div>Rounded Up Risk ($): <span id="roundedRiskUp">-</span></div>
   </div>
 
-  <!-- Reward vs Risk table -->
   <h3>R:R Targets</h3>
   <table>
     <thead>
@@ -87,7 +92,7 @@
     }
 
     function clearFields() {
-      ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice"].forEach(id => document.getElementById(id).value = "");
+      ["accountBalance","riskType","riskAmount","direction","levelPrice","atr","entryPrice"].forEach(id => document.getElementById(id).value = "");
       ["stopPoints","contractsExact","contractsRounded","contractsRoundedUp","roundedRisk","roundedRiskUp"].forEach(id => document.getElementById(id).textContent = "-");
       document.getElementById("rrTableBody").innerHTML = "";
     }
@@ -101,7 +106,9 @@
       const lvl = parseFloat(document.getElementById("levelPrice").value) || 0;
       const atr = parseFloat(document.getElementById("atr").value) || 0;
       const ent = parseFloat(document.getElementById("entryPrice").value) || 0;
+      const dir = document.getElementById("direction").value;
 
+      // Stop points = |Entry - Level| + ATR
       const actualRiskPts = Math.abs(ent - lvl) + atr;
       document.getElementById("stopPoints").textContent = actualRiskPts.toFixed(2);
 
@@ -118,14 +125,17 @@
       document.getElementById("roundedRisk").textContent = (roundedContracts * perContractRisk).toFixed(2);
       document.getElementById("roundedRiskUp").textContent = (roundedUpContracts * perContractRisk).toFixed(2);
 
-      // Build R:R table
+      // R:R table
       const tbody = document.getElementById("rrTableBody"); tbody.innerHTML = "";
       for (let i = 1; i <= 5; i++) {
         const tr = document.createElement("tr");
         const ratioCell = document.createElement("td"); ratioCell.textContent = `${i}:1`;
-        const targetPrice = lvl + atr * i;
+        // Target price adjusted for long/short
+        const targetPrice = dir === 'long'
+          ? lvl + atr * i
+          : lvl - atr * i;
         const targetCell = document.createElement("td"); targetCell.textContent = targetPrice.toFixed(2);
-        const actualRr = atr * i / actualRiskPts;
+        const actualRr = (atr * i) / actualRiskPts;
         const rrCell = document.createElement("td"); rrCell.textContent = actualRr.toFixed(2);
         tr.append(ratioCell, targetCell, rrCell);
         tbody.appendChild(tr);
@@ -138,7 +148,7 @@
       renderInstruments();
       document.getElementById("themeToggle").addEventListener("click", toggleTheme);
       document.getElementById("instrument").addEventListener("change", clearFields);
-      ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice"].forEach(id =>
+      ["accountBalance","riskType","riskAmount","direction","levelPrice","atr","entryPrice"].forEach(id =>
         document.getElementById(id).addEventListener("input", calculate)
       );
     });
