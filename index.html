@@ -161,7 +161,10 @@
       { symbol: 'ZN', value: 1000 },
       { symbol: 'ZB', value: 1000 }
     ];
-    let instruments = JSON.parse(localStorage.getItem('instruments')) || defaultInstruments;
+    const storedInstruments = JSON.parse(localStorage.getItem('instruments'));
+let instruments = (Array.isArray(storedInstruments) && storedInstruments.length > 0)
+    ? storedInstruments
+    : defaultInstruments;
 
     const acctEl = document.getElementById('accountBalance'),
           typeEl = document.getElementById('riskType'),
