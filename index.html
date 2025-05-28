@@ -130,14 +130,36 @@
   </div>
 
   <script>
-    // Default instruments with $ per point
+    // Default instruments with $ per point values
     const defaultInstruments = [
-      { symbol: 'MNQ', value: 1 },
-      { symbol: 'MES', value: 1 },
-      { symbol: 'MGC', value: 1 },
-      { symbol: 'MCL', value: 1 },
-      { symbol: 'MYM', value: 1 },
-      { symbol: 'M2K', value: 1 }
+      { symbol: 'ES', value: 50 },
+      { symbol: 'MES', value: 5 },
+      { symbol: 'NQ', value: 20 },
+      { symbol: 'MNQ', value: 2 },
+      { symbol: 'YM', value: 5 },
+      { symbol: 'MYM', value: 0.5 },
+      { symbol: 'RTY', value: 50 },
+      { symbol: 'M2K', value: 5 },
+      { symbol: 'GC', value: 100 },
+      { symbol: 'MGC', value: 10 },
+      { symbol: 'SI', value: 250 },
+      { symbol: 'SIL', value: 50 },
+      { symbol: 'CL', value: 1000 },
+      { symbol: 'QM', value: 1250 },
+      { symbol: 'NG', value: 10000 },
+      { symbol: 'QG', value: 12500 },
+      { symbol: 'ZC', value: 50 },
+      { symbol: 'ZS', value: 50 },
+      { symbol: 'ZW', value: 50 },
+      { symbol: '6E', value: 1250 },
+      { symbol: '6B', value: 625 },
+      { symbol: '6J', value: 12500 },
+      { symbol: '6C', value: 1000 },
+      { symbol: '6S', value: 1250 },
+      { symbol: 'HE', value: 400 },
+      { symbol: 'LE', value: 400 },
+      { symbol: 'ZN', value: 1000 },
+      { symbol: 'ZB', value: 1000 }
     ];
     let instruments = JSON.parse(localStorage.getItem('instruments')) || defaultInstruments;
 
@@ -177,16 +199,14 @@
 
     // Render instruments dropdown & list
     function renderInstruments(){
-      // dropdown
       instEl.innerHTML='';
       instruments.forEach(i=>{
         const opt=document.createElement('option');
         opt.value=i.symbol; opt.textContent=`${i.symbol} ($${i.value}/pt)`;
         instEl.appendChild(opt);
       });
-      // sidebar list
       instList.innerHTML='';
-      instruments.forEach((i,idx)=>{
+      instruments.forEach(i=>{
         const li=document.createElement('li');
         li.textContent=`${i.symbol}: $${i.value}/pt`;
         instList.appendChild(li);
@@ -207,74 +227,4 @@
     // Validation
     function validateInputs(){
       clearErrors(); let ok=true;
-      const acct=parseFloat(acctEl.value)||0; if(acct<=0){showError(document.getElementById('acctError'),'>0');ok=false;}
-      const amt=parseFloat(amtEl.value)||0;
-      if(typeEl.value==='dollar'&&amt<=0){showError(document.getElementById('amtError'),'>0');ok=false;}
-      if(typeEl.value==='percent'&&(amt<0||amt>100)){showError(document.getElementById('amtError'),'0–100');ok=false;}
-      const lvl=parseFloat(lvlEl.value)||0; if(lvl<=0){showError(document.getElementById('levelError'),'>0');ok=false;}
-      const atr=parseFloat(atrEl.value)||0; if(atr<=0){showError(document.getElementById('atrError'),'>0');ok=false;}
-      const ent=parseFloat(entEl.value)||0; if(ent<=0){showError(document.getElementById('entryError'),'>0');ok=false;}
-      const rr=parseFloat(rrEl.value)||0; if(rr<=0){showError(document.getElementById('rrError'),'>0');ok=false;}
-      return ok;
-    }
-
-    function clearFields(){
-      [lvlEl,atrEl,entEl,rrEl].forEach(i=>i.value='');
-      stopEl.value='';
-      ['stopPrice','actualRiskPoints','perContractRisk','contracts','totalRisk','targetPrice']
-        .forEach(id=>document.getElementById(id).textContent=id==='totalRisk'?'0.00':'-');
-      clearErrors();
-    }
-
-    // Core calculation
-    function calculate(){
-      if(!validateInputs()) return;
-      let riskAmt=parseFloat(amtEl.value)||0;
-      if(typeEl.value==='percent')riskAmt=(parseFloat(amtEl.value)||0)/100*(parseFloat(acctEl.value)||0);
-      const lvl=parseFloat(lvlEl.value),atr=parseFloat(atrEl.value),ent=parseFloat(entEl.value),dir=dirEl.value;
-      const stopPrice=dir==='long'?lvl-atr:lvl+atr;
-      stopPriceEl.textContent=stopPrice.toFixed(2);
-      stopEl.value=atr.toFixed(2);
-      const actualPts=Math.abs(ent-lvl)+atr;
-      actualPtsEl.textContent=actualPts.toFixed(2);
-      const pointVal=instruments.find(i=>i.symbol===instEl.value).value||1;
-      const perRisk=actualPts*pointVal;
-      perRiskEl.textContent=perRisk.toFixed(2);
-      const ctr=perRisk>0?Math.floor(riskAmt/perRisk):0;
-      ctrEl.textContent=ctr;
-      const tot=(ctr*perRisk).toFixed(2);
-      totalEl.textContent=tot;
-      const rrVal=parseFloat(rrEl.value)||0;
-      const tgt=rrVal>0?(dir==='long'?ent+actualPts*rrVal:ent-actualPts*rrVal):'-';
-      tgtEl.textContent=rrVal>0?tgt.toFixed(2):'-';
-      lblEl.textContent=typeEl.value==='percent'?'Risk Amount (%)':'Risk Amount ($)';
-      if(ctr>0){
-        const rec={t:new Date().toLocaleString(),instr:instEl.value,d:dir,c:ctr,r:tot,tp:rrVal>0?tgt.toFixed(2):'-'};
-        history.unshift(rec);if(history.length>20)history.pop();
-        localStorage.setItem('history',JSON.stringify(history));renderHistory();
-      }
-    }
-
-    // Presets & history same as before...
-    function renderPresets(){presetsList.innerHTML='';presets.forEach((p,i)=>{const li=document.createElement('li');li.textContent=p.name;li.onclick=()=>loadPreset(i);presetsList.appendChild(li);});}
-    function savePreset(){const name=prompt('Name this preset:');if(!name)return;presets.push({name,type:typeEl.value,amt:amtEl.value,acct:acctEl.value,instr:instEl.value,dir:dirEl.value,lvl:lvlEl.value,atr:atrEl.value,ent:entEl.value,rr:rrEl.value});localStorage.setItem('presets',JSON.stringify(presets));renderPresets();}
-    function loadPreset(i){const p=presets[i];typeEl.value=p.type;amtEl.value=p.amt;acctEl.value=p.acct;instEl.value=p.instr;dirEl.value=p.dir;lvlEl.value=p.lvl;atrEl.value=p.atr;entEl.value=p.ent;rrEl.value=p.rr;calculate();}
-    function renderHistory(){historyList.innerHTML='';history.forEach(r=>{const li=document.createElement('li');li.textContent=`${r.t} | ${r.instr} ${r.d} | ctrs: ${r.c} | risk $${r.r}`+(r.tp!=='-'?` | tgt ${r.tp}`:'');historyList.appendChild(li);});}
-    function exportHistory(){let csv='Time,Instr,Dir,Contracts,Risk,Target\n';history.forEach(r=>csv+=`${r.t},${r.instr},${r.d},${r.c},${r.r},${r.tp}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='history.csv';a.click();URL.revokeObjectURL(url);}
-    function toggleTheme(){document.body.classList.toggle('dark');}
-
-    // Event bindings
-    addInstBtn.onclick=addInstrument;
-    instEl.addEventListener('change', clearFields);
-    [acctEl,typeEl,amtEl,dirEl,instEl,lvlEl,atrEl,entEl,rrEl].forEach(e=>e.addEventListener('input', calculate));
-    saveBtn.onclick=savePreset;exportBtn.onclick=exportHistory;themeBtn.onclick=toggleTheme;
-
-    // Init
-    function init(){
-      renderInstruments();renderPresets();renderHistory();calculate();
-      if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
-    }
-    init();
-  </script>
-</body>
-</html>
+      const acct=parseFloat(acctEl.value)```
