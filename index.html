@@ -245,8 +245,19 @@
     function savePreset(){const name=prompt('Name this preset:');if(!name)return;presets.push({name,type:typeEl.value,amt:amtEl.value,acct:acctEl.value,instr:instEl.value,dir:dirEl.value,lvl:lvlEl.value,atr:atrEl.value,ent:entEl.value,rr:rrEl.value});localStorage.setItem('presets',JSON.stringify(presets));renderPresets();}
     function loadPreset(i){const p=presets[i];typeEl.value=p.type;amtEl.value=p.amt;acctEl.value=p.acct;instEl.value=p.instr;dirEl.value=p.dir;lvlEl.value=p.lvl;atrEl.value=p.atr;entEl.value=p.ent;rrEl.value=p.rr;calculate();}
     function renderHistory(){historyList.innerHTML='';history.forEach(r=>{const li=document.createElement('li');li.textContent=`${r.t} | ${r.instr} ${r.d} | ctrs: ${r.c} | risk $${r.r}`+(r.tp!=='-'?` | tgt ${r.tp}`:'');historyList.appendChild(li);});}
-    function exportHistory(){let csv='Time,Instr,Dir,Contracts,Risk,Target
-';history.forEach(r=>csv+=`${r.t},${r.instr},${r.d},${r.c},${r.r},${r.tp}
+        function exportHistory() {
+      let csv = 'Time,Instr,Dir,Contracts,Risk,Target\n';
+      history.forEach(r => {
+        csv += `${r.t},${r.instr},${r.d},${r.c},${r.r},${r.tp}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'history.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 `);const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='history.csv';a.click();URL.revokeObjectURL(url);}
     function toggleTheme(){document.body.classList.toggle('dark');}
 
