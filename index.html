@@ -16,7 +16,6 @@
     label { display: block; margin-top: 1rem; font-weight: bold; }
     input, select, button { width: 100%; padding: 0.5rem; margin-top: 0.25rem; box-sizing: border-box; }
     .output { margin-top: 1rem; font-size: 1.1rem; }
-    .error { color: red; font-size: 0.9rem; display: none; }
   </style>
 </head>
 <body>
@@ -24,35 +23,51 @@
     <h1>Position Sizer</h1>
     <button id="themeToggle">Toggle Theme</button>
   </div>
+
   <label for="instrument">Instrument</label>
   <select id="instrument"></select>
+
   <label for="accountBalance">Account Balance ($)</label>
   <input type="number" id="accountBalance" placeholder="20000">
+
   <label for="riskType">Risk Type</label>
-  <select id="riskType"><option value="dollar">Fixed Dollar</option><option value="percent">Percent of Equity</option></select>
+  <select id="riskType">
+    <option value="dollar">Fixed Dollar</option>
+    <option value="percent">Percent of Equity</option>
+  </select>
+
   <label id="riskLabel" for="riskAmount">Risk Amount ($)</label>
   <input type="number" id="riskAmount" placeholder="100">
+
   <label for="levelPrice">Level Price</label>
   <input type="number" id="levelPrice" placeholder="10000">
+
   <label for="atr">ATR (points)</label>
   <input type="number" id="atr" placeholder="8">
+
   <label for="entryPrice">Entry Price</label>
   <input type="number" id="entryPrice" placeholder="10005">
+
   <label for="rr">Risk:Reward Ratio</label>
   <input type="number" id="rr" placeholder="2">
+
   <div class="output">
     <div>Stop Points: <span id="stopPoints">-</span></div>
-    <div>Contracts: <span id="contracts">0</span></div>
+    <div>Contracts (exact): <span id="contractsExact">-</span></div>
+    <div>Contracts (rounded): <span id="contractsRounded">-</span></div>
+    <div>Rounded Risk ($): <span id="roundedRisk">-</span></div>
   </div>
+
   <script>
-    // Instruments list
+    // Instruments list: symbol and $ per point
     const instruments = [
       { symbol: "ES", value: 50 },{ symbol: "MES", value: 5 },{ symbol: "NQ", value: 20 },{ symbol: "MNQ", value: 2 },
       { symbol: "YM", value: 5 },{ symbol: "MYM", value: 0.5 },{ symbol: "RTY", value: 50 },{ symbol: "M2K", value: 5 },
       { symbol: "GC", value: 100 },{ symbol: "MGC", value: 10 },{ symbol: "SI", value: 250 },{ symbol: "SIL", value: 50 },
       { symbol: "CL", value: 1000 },{ symbol: "QM", value: 1250 },{ symbol: "NG", value: 10000 },{ symbol: "QG", value: 12500 }
     ];
-    // Populate dropdown
+
+    // Populate the instrument dropdown
     function renderInstruments() {
       const sel = document.getElementById("instrument");
       sel.innerHTML = "";
@@ -63,44 +78,62 @@
         sel.appendChild(opt);
       });
     }
-    // Clear fields
+
+    // Clear input fields and outputs
     function clearFields() {
-      ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice","rr"].forEach(id => document.getElementById(id).value = "");
-      document.getElementById("stopPoints").textContent = "-";
-      document.getElementById("contracts").textContent = "0";
+      ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice","rr"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      ["stopPoints","contractsExact","contractsRounded","roundedRisk"].forEach(id => {
+        document.getElementById(id).textContent = "-";
+      });
     }
-    // Calculate function
+
+    // Main calculation logic
     function calculate() {
       const instSym = document.getElementById("instrument").value;
       const inst = instruments.find(i => i.symbol === instSym);
       const acct = parseFloat(document.getElementById("accountBalance").value) || 0;
       let riskAmt = parseFloat(document.getElementById("riskAmount").value) || 0;
       if (document.getElementById("riskType").value === "percent") {
-        riskAmt = riskAmt / 100 * acct;
+        riskAmt = (riskAmt / 100) * acct;
       }
       const lvl = parseFloat(document.getElementById("levelPrice").value) || 0;
       const atr = parseFloat(document.getElementById("atr").value) || 0;
       const ent = parseFloat(document.getElementById("entryPrice").value) || 0;
-      const rr = parseFloat(document.getElementById("rr").value) || 0;
-      const actualPts = Math.abs(ent - lvl) + atr;
-      document.getElementById("stopPoints").textContent = actualPts.toFixed(2);
-      const perRisk = actualPts * inst.value;
-      const contracts = perRisk > 0 ? Math.floor(riskAmt / perRisk) : 0;
-      document.getElementById("contracts").textContent = contracts;
+
+      // Stop points = |Entry - Level| + ATR
+      const stopPoints = Math.abs(ent - lvl) + atr;
+      document.getElementById("stopPoints").textContent = stopPoints.toFixed(2);
+
+      // Exact contracts (decimal)
+      const perContractRisk = stopPoints * inst.value;
+      const exactContracts = perContractRisk > 0 ? riskAmt / perContractRisk : 0;
+      document.getElementById("contractsExact").textContent = exactContracts.toFixed(2);
+
+      // Rounded down contracts
+      const roundedContracts = Math.floor(exactContracts);
+      document.getElementById("contractsRounded").textContent = roundedContracts;
+
+      // Risk based on rounded contracts
+      const roundedRisk = roundedContracts * perContractRisk;
+      document.getElementById("roundedRisk").textContent = roundedRisk.toFixed(2);
     }
-    // Theme toggle
+
+    // Toggle light/dark theme
     function toggleTheme() {
       document.body.classList.toggle("dark");
     }
-    // Init
+
+    // Initialize on page load
     document.addEventListener("DOMContentLoaded", () => {
       renderInstruments();
-      // Attach events
       document.getElementById("themeToggle").addEventListener("click", toggleTheme);
       document.getElementById("instrument").addEventListener("change", clearFields);
-      ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice","rr"].forEach(id => {
+      ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice"].forEach(id => {
         document.getElementById(id).addEventListener("input", calculate);
       });
+      document.getElementById("rr").addEventListener("input", calculate);
     });
   </script>
 </body>
