@@ -261,7 +261,9 @@
       function toggleTheme(){ document.body.classList.toggle('dark'); }
 
       // Event bindings
-      instEl.addEventListener('change', clearFields);
+      instEl.addEventListener('change', () => { clearFields(); calculate(); });
+      // Recalculate and clear when direction changes as well
+      dirEl.addEventListener('change', () => { clearFields(); calculate(); });
       [acctEl,typeEl,amtEl,dirEl,instEl, lvlEl,atrEl,entEl,rrEl].forEach(e=> e.addEventListener('input', calculate));
       saveBtn.onclick    = savePreset;
       exportBtn.onclick  = exportHistory;
