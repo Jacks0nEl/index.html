@@ -161,10 +161,16 @@
       { symbol: 'ZN', value: 1000 },
       { symbol: 'ZB', value: 1000 }
     ];
-    const storedInstruments = JSON.parse(localStorage.getItem('instruments'));
-let instruments = (Array.isArray(storedInstruments) && storedInstruments.length > 0)
-    ? storedInstruments
-    : defaultInstruments;
+    // Initialize instruments list, defaulting to built-ins if none in storage
+const storedInstruments = JSON.parse(localStorage.getItem('instruments'));
+let instruments;
+if (Array.isArray(storedInstruments) && storedInstruments.length > 0) {
+  instruments = storedInstruments;
+} else {
+  instruments = defaultInstruments;
+  // Persist default list so it's available next time
+  localStorage.setItem('instruments', JSON.stringify(defaultInstruments));
+}
 
     const acctEl = document.getElementById('accountBalance'),
           typeEl = document.getElementById('riskType'),
