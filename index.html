@@ -56,6 +56,7 @@
     <div>Contracts (exact): <span id="contractsExact">-</span></div>
     <div>Contracts (rounded): <span id="contractsRounded">-</span></div>
     <div>Rounded Risk ($): <span id="roundedRisk">-</span></div>
+    <div>Rounded Up Risk ($): <span id="roundedRiskUp">-</span></div>
   </div>
 
   <script>
@@ -84,7 +85,7 @@
       ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice","rr"].forEach(id => {
         document.getElementById(id).value = "";
       });
-      ["stopPoints","contractsExact","contractsRounded","roundedRisk"].forEach(id => {
+      ["stopPoints","contractsExact","contractsRounded","roundedRisk","roundedRiskUp"].forEach(id => {
         document.getElementById(id).textContent = "-";
       });
     }
@@ -118,6 +119,11 @@
       // Risk based on rounded contracts
       const roundedRisk = roundedContracts * perContractRisk;
       document.getElementById("roundedRisk").textContent = roundedRisk.toFixed(2);
+
+      // Rounded up contracts and risk
+      const roundedUpContracts = Math.ceil(exactContracts);
+      const roundedUpRisk = roundedUpContracts * perContractRisk;
+      document.getElementById("roundedRiskUp").textContent = roundedUpRisk.toFixed(2);
     }
 
     // Toggle light/dark theme
@@ -130,10 +136,9 @@
       renderInstruments();
       document.getElementById("themeToggle").addEventListener("click", toggleTheme);
       document.getElementById("instrument").addEventListener("change", clearFields);
-      ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice"].forEach(id => {
+      ["accountBalance","riskType","riskAmount","levelPrice","atr","entryPrice","rr"].forEach(id => {
         document.getElementById(id).addEventListener("input", calculate);
       });
-      document.getElementById("rr").addEventListener("input", calculate);
     });
   </script>
 </body>
